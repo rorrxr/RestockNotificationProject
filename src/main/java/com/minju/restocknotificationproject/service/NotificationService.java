@@ -36,7 +36,7 @@ public class NotificationService {
         productRepository.save(product);
 
         // 3. 알림 히스토리 생성
-        ProductNotificationHistory notificationHistory = createNotificationHistory(productId, product.getRestockRound());
+        ProductNotificationHistory notificationHistory = createNotificationHistory(product, product.getRestockRound());
 
         // 4. 유저별 알림 발송
         try {
@@ -55,9 +55,9 @@ public class NotificationService {
     }
 
     // 알림 히스토리 생성
-    private ProductNotificationHistory createNotificationHistory(Long productId, int restockRound) {
+    private ProductNotificationHistory createNotificationHistory(Product product, int restockRound) {
         ProductNotificationHistory notificationHistory = new ProductNotificationHistory();
-        notificationHistory.setProductId(productId);
+        notificationHistory.setProduct(product); // 연관된 Product 객체 설정
         notificationHistory.setRestockRound(restockRound);
         notificationHistory.setStatus(ProductNotificationHistory.NotificationStatus.IN_PROGRESS);
         return notificationHistoryRepository.save(notificationHistory);
@@ -65,7 +65,10 @@ public class NotificationService {
 
     // 유저별 알림 발송
     private void sendNotificationsToUsers(Product product, ProductNotificationHistory notificationHistory) {
-        List<ProductUserNotification> users = userNotificationRepository.findByProductIdAndIsActiveTrueOrderByIdAsc(product.getId());
+        List<ProductUserNotification> users = product.getUserNotifications()
+                .stream()
+                .filter(ProductUserNotification::getIsActive) // 활성화된 알림만 필터링
+                .toList();
 
         for (ProductUserNotification user : users) {
             if (product.getStock() <= 0) {
@@ -73,7 +76,7 @@ public class NotificationService {
                 return;
             }
 
-            saveUserNotificationHistory(product, user, notificationHistory.getRestockRound());
+            saveUserNotificationHistory(user, notificationHistory.getRestockRound());
             notificationHistory.setLastNotifiedUserId(user.getUserId());
 
             // 재고 감소
@@ -83,10 +86,9 @@ public class NotificationService {
     }
 
     // 유저 알림 기록 저장
-    private void saveUserNotificationHistory(Product product, ProductUserNotification user, int restockRound) {
+    private void saveUserNotificationHistory(ProductUserNotification userNotification, int restockRound) {
         ProductUserNotificationHistory userNotificationHistory = new ProductUserNotificationHistory();
-        userNotificationHistory.setProductId(product.getId());
-        userNotificationHistory.setUserId(user.getUserId());
+        userNotificationHistory.setUserNotification(userNotification); // 연관 관계 활용
         userNotificationHistory.setRestockRound(restockRound);
         userNotificationHistory.setNotifiedAt(LocalDateTime.now());
         userNotificationHistoryRepository.save(userNotificationHistory);
@@ -103,10 +105,10 @@ public class NotificationService {
         if (notificationHistory == null) {
             throw new IllegalArgumentException("알림이 없습니다.");
         }
-        
+
         return new ProductNotificationHistoryResponseDto(
                 notificationHistory.getId(),
-                notificationHistory.getProductId(),
+                notificationHistory.getProduct().getId(), // Product 객체에서 ID 조회
                 notificationHistory.getRestockRound(),
                 notificationHistory.getStatus(),
                 notificationHistory.getLastNotifiedUserId()
