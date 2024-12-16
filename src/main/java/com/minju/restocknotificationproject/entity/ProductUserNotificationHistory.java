@@ -25,4 +25,9 @@ public class ProductUserNotificationHistory {
     
     // 발송 날짜
     private LocalDateTime notifiedAt;
+
+    // 상품 알림 설정 (ManyToOne 관계)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_notification_id", nullable = false)
+    private ProductUserNotification userNotification;
 }

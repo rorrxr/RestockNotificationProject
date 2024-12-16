@@ -3,6 +3,8 @@ package com.minju.restocknotificationproject.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -17,4 +19,13 @@ public class Product {
     
     // 재고 상태
     private Integer stock;
+
+
+    // 상품별 알림 히스토리 (1:N 관계)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductNotificationHistory> notificationHistories = new ArrayList<>();
+
+    // 상품별 유저 알림 설정 (1:N 관계)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductUserNotification> userNotifications = new ArrayList<>();
 }

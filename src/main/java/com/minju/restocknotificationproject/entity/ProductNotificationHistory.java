@@ -32,4 +32,9 @@ public class ProductNotificationHistory {
         CANCELED_BY_ERROR,
         COMPLETED
     }
+
+    // 상품 아이디 (ManyToOne 관계)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 }

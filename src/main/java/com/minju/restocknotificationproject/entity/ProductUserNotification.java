@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 // 상품별 재입고 알림을 설정한 유저
 @Data
@@ -28,4 +30,15 @@ public class ProductUserNotification {
     
     // 수정 날짜
     private LocalDateTime updatedAt;
+
+    // 상품 아이디 (ManyToOne 관계)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+
+    // 유저 알림 히스토리 (1:N 관계)
+    @OneToMany(mappedBy = "userNotification", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductUserNotificationHistory> notificationHistories = new ArrayList<>();
+
 }
