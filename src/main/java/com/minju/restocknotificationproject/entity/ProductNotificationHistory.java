@@ -3,18 +3,20 @@ package com.minju.restocknotificationproject.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-// 상품별 재입고 알림 히스토리
 @Data
 @Entity
 @Table(name = "product_notification_history")
 public class ProductNotificationHistory {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // Primary Key
 
-    // 상품 아이디
-    private Long productId;
-    
+    // 상품과의 연관 관계
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false) // Foreign Key 매핑
+    private Product product;
+
     // 재입고 회차
     private Integer restockRound;
 
@@ -25,16 +27,11 @@ public class ProductNotificationHistory {
     // 마지막 발송 유저 아이디
     private Long lastNotifiedUserId;
 
-    // 재입고 알림 전송 상태
     public enum NotificationStatus {
         IN_PROGRESS,
         CANCELED_BY_SOLD_OUT,
         CANCELED_BY_ERROR,
         COMPLETED
     }
-
-    // 상품 아이디 (ManyToOne 관계)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
 }
+
