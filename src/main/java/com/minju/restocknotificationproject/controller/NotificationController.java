@@ -1,7 +1,9 @@
 package com.minju.restocknotificationproject.controller;
 
+import com.minju.restocknotificationproject.dto.ProductNotificationHistoryResponseDto;
 import com.minju.restocknotificationproject.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,12 +17,15 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @PostMapping("/{productId}/notifications/re-stock")
-    public void sendRestockNotification(@PathVariable Long productId) {
-        notificationService.sendRestockNotification(productId);
+    public ResponseEntity<ProductNotificationHistoryResponseDto> sendRestockNotification(@PathVariable Long productId) {
+        ProductNotificationHistoryResponseDto response = notificationService.sendRestockNotification(productId);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/admin/{productId}/notifications/re-stock")
-    public void resendRestockNotification(@PathVariable Long productId) {
-        notificationService.sendRestockNotification(productId);
+    public ResponseEntity<ProductNotificationHistoryResponseDto> resendRestockNotification(@PathVariable Long productId) {
+        ProductNotificationHistoryResponseDto response = notificationService.sendRestockNotification(productId);
+        return ResponseEntity.ok(response);
+
     }
 }
