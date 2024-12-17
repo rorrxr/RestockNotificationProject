@@ -137,6 +137,91 @@ __ __ __ __ __ __ __
 
 ## 트러블 슈팅 사례
 
-1. 더미 데이터 입력 시, id값이 잘못 출력되는 사례
+## 1. Foreign Key 설정 오류
 
-이 경우, 변수명을 제대로 구분지어주지 않아서 일어난 문제였습니다.
+### 문제
+- `product_user_notification_history` 테이블에서 `product_id`에 설정된 **Foreign Key Constraint**가 위배되어 오류가 발생했습니다.
+- `SQL Error [1452] [23000]: Cannot add or update a child row: a foreign key constraint fails`라는 오류 메시지가 나타났습니다.
+
+### 원인
+- `product_user_notification_history` 테이블에 데이터를 삽입할 때 `product_id` 값이 **`product` 테이블에 존재하지 않았습니다.**.
+- `ProductUserNotificationHistory` 엔티티의 `product` 필드에 `null`이 들어가거나, 영속 상태의 엔티티가 아닌 값이 설정되었습니다.
+- 서비스 코드에서 연관 관계를 제대로 설정하지 않아 `product_id`가 누락되었습니다.
+
+---
+
+### 해결
+#### **1. Product 엔티티 필드명과 컬럼명 정리**
+`Product` 엔티티의 `productId` 필드명을 `id`로 변경해 데이터베이스의 `id` 컬럼과 일치시켰습니다.
+
+**변경된 Product 엔티티**:
+```java
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+@Column(name = "id") // 테이블 컬럼과 일치
+private Long id;
+```
+
+#### **2. Service 코드 수정**
+서비스 코드에서 `ProductUserNotificationHistory` 엔티티를 저장할 때 `product` 필드를 `userNotification.getProduct()`로 설정하고, 값이 **null인지 확인**하여 처리했습니다.
+
+**수정된 메서드**:
+```java
+private void saveUserNotificationHistory(ProductUserNotification userNotification, int restockRound) {
+    if (userNotification.getProduct() == null) {
+        throw new IllegalStateException("Product cannot be null for user notification history.");
+    }
+
+    ProductUserNotificationHistory userNotificationHistory = new ProductUserNotificationHistory();
+    userNotificationHistory.setUserNotification(userNotification); // 연관 관계 설정
+    userNotificationHistory.setProduct(userNotification.getProduct()); // Product 설정
+    userNotificationHistory.setUserId(userNotification.getUserId());
+    userNotificationHistory.setRestockRound(restockRound);
+    userNotificationHistory.setNotifiedAt(LocalDateTime.now());
+
+    userNotificationHistoryRepository.save(userNotificationHistory);
+}
+```
+
+#### **3. 데이터베이스 초기 데이터 삽입 순서 확인**
+`product` 테이블에 `id` 값이 존재하는지 확인 후, `product_user_notification`과 `product_user_notification_history` 테이블에 데이터를 삽입했습니다.
+
+**데이터 삽입 SQL**:
+```sql
+-- 1. product 테이블 데이터 삽입
+INSERT INTO product (id, restock_round, stock) VALUES (1, 0, 50), (2, 0, 20);
+
+-- 2. product_user_notification 테이블 데이터 삽입
+INSERT INTO product_user_notification (id, product_id, user_id, is_active, created_at, updated_at)
+VALUES (1, 1, 101, TRUE, NOW(), NOW()), (2, 1, 102, TRUE, NOW(), NOW());
+
+-- 3. product_user_notification_history 테이블 데이터 삽입
+INSERT INTO product_user_notification_history (id, user_notification_id, product_id, restock_round, notified_at)
+VALUES (1, 1, 1, 0, '2024-12-01 10:00:00');
+```
+
+---
+
+### 결과
+- `ProductUserNotificationHistory` 테이블의 `product_id`가 `product` 테이블과 정확히 매핑되어 데이터가 정상적으로 삽입되었습니다.
+- 서비스 코드에서 연관 관계를 명확하게 설정해 데이터 무결성을 유지했습니다.
+
+---
+
+### 느낀점
+- **Foreign Key 제약 조건**은 데이터 무결성을 보장하지만, 삽입 순서나 연관 관계 설정이 잘못되면 오류가 발생할 수 있습니다.
+- 엔티티와 테이블 구조를 정확히 이해하고 **서비스 코드에서 영속 상태의 엔티티를 사용해야 한다는 점**을 배웠습니다.
+- 데이터 삽입 시 **외래 키 참조 테이블에 먼저 데이터를 삽입**해야 한다는 원칙을 다시 확인했습니다.
+
+---
+
+### 참고
+- **연관 관계 설정**: `@ManyToOne`과 `@JoinColumn` 어노테이션 사용합니다.
+- **오류 로그 분석**: `SQL Error [1452]`는 대부분 참조하는 키가 존재하지 않을 때 발생합니다.
+- **데이터 삽입 순서**: 테이블 간 관계를 고려하여 데이터 삽입해야 합니다.
+
+---
+
+### 코드 개선 후 검증 결과
+**Postman 테스트**를 통해 `/products/{id}/notifications/re-stock` 엔드포인트가 정상 동작하는 것을 확인했습니다.  
+데이터베이스에 연관 데이터가 올바르게 삽입된 것을 MySQL 쿼리로 검증했습니다.
