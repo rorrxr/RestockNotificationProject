@@ -1,5 +1,6 @@
 package com.minju.restocknotificationproject.service;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.minju.restocknotificationproject.dto.ProductNotificationHistoryResponseDto;
 import com.minju.restocknotificationproject.entity.Product;
 import com.minju.restocknotificationproject.entity.ProductNotificationHistory;
@@ -26,6 +27,9 @@ public class NotificationService {
     private final ProductUserNotificationRepository userNotificationRepository;
     private final ProductUserNotificationHistoryRepository userNotificationHistoryRepository;
 
+    // 초당 500개의 요청을 허용하는 RateLimiter 설정
+    private final RateLimiter rateLimiter = RateLimiter.create(500.0);
+
     /*
         재입고 알림을 발송하고 상태를 업데이트하는 메서드
         Long productId => 상품 ID
@@ -37,7 +41,7 @@ public class NotificationService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("제품을 찾을 수 없습니다. ID=" + productId));
 
-        // Fetch join을 사용하여 userNotifications(알림 설정된 유저 목록) 로드
+        // userNotifications(알림 설정된 유저 목록) 로드
         List<ProductUserNotification> users = product.getUserNotifications();
 
         // 2. 재입고 회차 업데이트
@@ -71,9 +75,9 @@ public class NotificationService {
      */
     private ProductNotificationHistory createNotificationHistory(Product product, int restockRound) {
         ProductNotificationHistory notificationHistory = new ProductNotificationHistory();
-        notificationHistory.setProduct(product); // 상품 설정
-        notificationHistory.setRestockRound(restockRound); // 회차 설정
-        notificationHistory.setStatus(ProductNotificationHistory.NotificationStatus.IN_PROGRESS); // 초기 상태 설정
+        notificationHistory.setProduct(product);
+        notificationHistory.setRestockRound(restockRound);
+        notificationHistory.setStatus(ProductNotificationHistory.NotificationStatus.IN_PROGRESS);
         return notificationHistoryRepository.save(notificationHistory);
     }
 
@@ -87,21 +91,25 @@ public class NotificationService {
         List<ProductUserNotification> users = product.getUserNotifications()
                 .stream()
                 .filter(ProductUserNotification::getIsActive)
+                .filter(user -> user.getUserId() > notificationHistory.getLastNotifiedUserId()) // 마지막 전송된 유저 이후부터 전송
                 .toList();
 
-        // 각 유저에게 알림 전송
+        // 각 유저에게 알림을 전송하며 RateLimiter 적용
         for (ProductUserNotification user : users) {
-            // 4-1. 재고가 0 이하라면 알림 중단 및 상태 업데이트 (재고 소진 시 알림 중단)
+            // 4-1. 재고가 0 이하라면 알림 중단 및 상태 업데이트
             if (product.getStock() <= 0) {
                 updateNotificationStatus(notificationHistory, ProductNotificationHistory.NotificationStatus.CANCELED_BY_SOLD_OUT);
                 return;
             }
 
-            // 4-2. 유저 알림 기록 저장
+            // 4-2. Rate Limiter를 통해 속도 제한 적용
+            rateLimiter.acquire();
+
+            // 4-3. 유저 알림 기록 저장
             saveUserNotificationHistory(user, notificationHistory.getRestockRound());
             notificationHistory.setLastNotifiedUserId(user.getUserId()); // 마지막 알림 보낸 유저 ID 업데이트
 
-            // 4-3. 재고 감소
+            // 4-4. 재고 감소
             product.setStock(product.getStock() - 1);
             productRepository.save(product);
         }
@@ -113,19 +121,17 @@ public class NotificationService {
          int restockRound 재입고 회차
      */
     private void saveUserNotificationHistory(ProductUserNotification userNotification, int restockRound) {
-        // userNotification의 제품이 없다면 throw 발생
         if (userNotification.getProduct() == null) {
             throw new IllegalStateException("제품을 찾지 못했습니다.");
         }
 
         ProductUserNotificationHistory userNotificationHistory = new ProductUserNotificationHistory();
         userNotificationHistory.setUserNotification(userNotification);
-        userNotificationHistory.setProduct(userNotification.getProduct()); // 연관된 Product 설정
-        userNotificationHistory.setUserId(userNotification.getUserId()); // 유저 ID 설정
-        userNotificationHistory.setRestockRound(restockRound); // 회차 설정
-        userNotificationHistory.setNotifiedAt(LocalDateTime.now()); // 알림 전송 시간 설정
+        userNotificationHistory.setProduct(userNotification.getProduct());
+        userNotificationHistory.setUserId(userNotification.getUserId());
+        userNotificationHistory.setRestockRound(restockRound);
+        userNotificationHistory.setNotifiedAt(LocalDateTime.now());
 
-        // 기록 저장
         userNotificationHistoryRepository.save(userNotificationHistory);
     }
 
@@ -145,16 +151,11 @@ public class NotificationService {
          ProductNotificationHistoryResponseDto 알림 기록에 대한 DTO를 반환
      */
     private ProductNotificationHistoryResponseDto convertToResponseDto(ProductNotificationHistory notificationHistory) {
-        // notificationHistory가 존재하지 않는다면 throw 발생
-        if (notificationHistory == null) {
-            throw new IllegalArgumentException("알림이 없습니다.");
-        }
-
         return new ProductNotificationHistoryResponseDto(
-                notificationHistory.getProduct().getProductId(), // 상품 ID
-                notificationHistory.getRestockRound(), // 재입고 회차
-                notificationHistory.getStatus().name(), // 상태
-                notificationHistory.getLastNotifiedUserId() // 마지막 알림 유저 ID
+                notificationHistory.getProduct().getProductId(),
+                notificationHistory.getRestockRound(),
+                notificationHistory.getStatus().name(),
+                notificationHistory.getLastNotifiedUserId()
         );
     }
 }
