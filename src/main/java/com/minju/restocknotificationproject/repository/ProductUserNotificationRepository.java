@@ -9,5 +9,4 @@ import java.util.List;
 
 @Repository
 public interface ProductUserNotificationRepository extends JpaRepository<ProductUserNotification, Long> {
-    List<ProductUserNotification> findByProductIdAndIsActiveTrueOrderByIdAsc(Long productId);
 }

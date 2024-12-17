@@ -31,6 +31,9 @@ public class NotificationService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("제품을 찾을 수 없습니다. ID=" + productId));
 
+        // Fetch join을 사용하여 userNotifications 로드
+        List<ProductUserNotification> users = product.getUserNotifications();
+
         // 2. 재입고 회차 업데이트
         product.setRestockRound(product.getRestockRound() + 1);
         productRepository.save(product);
@@ -87,12 +90,22 @@ public class NotificationService {
 
     // 유저 알림 기록 저장
     private void saveUserNotificationHistory(ProductUserNotification userNotification, int restockRound) {
+        if (userNotification.getProduct() == null) {
+            throw new IllegalStateException("제품을 찾지 못했습니다.");
+        }
+
         ProductUserNotificationHistory userNotificationHistory = new ProductUserNotificationHistory();
-        userNotificationHistory.setUserNotification(userNotification); // 연관 관계 활용
+        userNotificationHistory.setUserNotification(userNotification);
+        userNotificationHistory.setProduct(userNotification.getProduct()); // 연관된 Product 설정
+        userNotificationHistory.setUserId(userNotification.getUserId());
         userNotificationHistory.setRestockRound(restockRound);
         userNotificationHistory.setNotifiedAt(LocalDateTime.now());
+
+        // 저장
         userNotificationHistoryRepository.save(userNotificationHistory);
     }
+
+
 
     // 알림 상태 업데이트
     private void updateNotificationStatus(ProductNotificationHistory notificationHistory, ProductNotificationHistory.NotificationStatus status) {
@@ -107,9 +120,9 @@ public class NotificationService {
         }
 
         return new ProductNotificationHistoryResponseDto(
-                notificationHistory.getProductId(),
+                notificationHistory.getProduct().getProductId(), // Product에서 productId 가져오기
                 notificationHistory.getRestockRound(),
-                notificationHistory.getStatus(),
+                notificationHistory.getStatus().name(), // ENUM을 String으로 변환
                 notificationHistory.getLastNotifiedUserId()
         );
     }

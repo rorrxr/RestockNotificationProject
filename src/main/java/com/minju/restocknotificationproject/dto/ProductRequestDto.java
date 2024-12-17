@@ -8,12 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductRequestDto {
-
-    private Long productId;
-
-    // 재입고 회차
     private Integer restockRound;
-
-    // 재고 상태
     private Integer stock;
 }

@@ -2,6 +2,7 @@ package com.minju.restocknotificationproject.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,20 +13,19 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productId; // 상품 아이디
+    @Column(name = "id") // 상품 아이디(기본키)
+    private Long productId;
 
     // 재입고 회차
+    @Column(name = "restock_round")
     private Integer restockRound;
 
     // 재고 상태
+    @Column(name = "stock")
     private Integer stock;
 
-    // 상품별 알림 히스토리 (1:N 관계)
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductNotificationHistory> notificationHistories = new ArrayList<>();
-
-    // 상품별 유저 알림 설정 (1:N 관계)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductUserNotification> userNotifications = new ArrayList<>();
-}
 
+
+}

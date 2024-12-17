@@ -8,12 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductResponseDto {
-
-    private Long productId;
-
-    // 재입고 회차
+    private Long productId; // PK: 상품 아이디
     private Integer restockRound;
-
-    // 재고 상태
     private Integer stock;
 }
