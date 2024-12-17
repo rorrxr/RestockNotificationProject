@@ -2,9 +2,8 @@ package com.minju.restocknotificationproject.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
 @Entity
@@ -13,26 +12,27 @@ public class ProductUserNotification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 상품 아이디
+    @Column(name = "id") // 인덱스 (기본키)
+    private Long id;
 
-    // 상품과 연관 관계 설정
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id", nullable = false) // FK 컬럼
     private Product product;
 
     // 유저 아이디
+    @Column(name = "user_id")
     private Long userId;
 
     // 활성화 여부
+    @Column(name = "is_active")
     private Boolean isActive;
 
     // 생성 날짜
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     // 수정 날짜
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // 유저 알림 히스토리 (1:N 관계)
-    @OneToMany(mappedBy = "userNotification", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductUserNotificationHistory> notificationHistories = new ArrayList<>();
 }

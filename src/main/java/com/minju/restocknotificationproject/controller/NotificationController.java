@@ -15,6 +15,7 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    //
     @PostMapping("/products/{productId}/notifications/re-stock")
     public ResponseEntity<ProductNotificationHistoryResponseDto> sendRestockNotification(@PathVariable Long productId) {
         ProductNotificationHistoryResponseDto response = notificationService.sendRestockNotification(productId);
