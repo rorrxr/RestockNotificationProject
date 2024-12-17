@@ -26,6 +26,13 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    // 1초에 최대 500개의 요청을 보내기 위해 사용할 레이트 리미팅(rate limiting) 환경
+    implementation 'com.google.guava:guava:32.1.2-jre'
+
+    // 1초에 최대 500개의 요청을 보내기 위해 사용할 레이트 리미팅(rate limiting)을 위해 라이브러리 추가
+    implementation 'com.bucket4j:bucket4j-redis:8.5.0' // Redis 연동
+    implementation 'io.lettuce:lettuce-core:6.3.2.RELEASE'
+
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.h2database:h2'
