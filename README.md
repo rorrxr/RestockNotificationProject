@@ -212,8 +212,8 @@ VALUES (1, 1, 1, 0, '2024-12-01 10:00:00');
 ---
 
 ### 검증 결과
-**Postman 테스트**를 통해 `/products/{id}/notifications/re-stock` 엔드포인트가 정상 동작하는 것을 확인했습니다.  
-데이터베이스에 연관 데이터가 올바르게 삽입된 것을 MySQL 쿼리로 검증했습니다.
+- **Postman 테스트**를 통해 `/products/{id}/notifications/re-stock` 엔드포인트가 정상 동작하는 것을 확인했습니다.  
+- 데이터베이스에 연관 데이터가 올바르게 삽입된 것을 MySQL 쿼리로 검증했습니다.
 ---
 ## 2. 1초에 최대 500개의 요청를 위한 RateLimiter 적용
 
