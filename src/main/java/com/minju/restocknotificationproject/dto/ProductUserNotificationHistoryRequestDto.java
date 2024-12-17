@@ -10,10 +10,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductUserNotificationHistoryRequestDto {
-    private Long id;
+    private Long productId;
 
     // 상품 아이디
-    private Long productId;
+//    private Long productId;
 
     // 유저 아이디
     private Long userId;

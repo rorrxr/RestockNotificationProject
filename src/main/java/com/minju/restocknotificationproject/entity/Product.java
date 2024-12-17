@@ -12,7 +12,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 상품 아이디
+    private Long productId; // 상품 아이디
 
     // 재입고 회차
     private Integer restockRound;

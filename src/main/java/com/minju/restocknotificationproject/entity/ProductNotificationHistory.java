@@ -10,7 +10,7 @@ public class ProductNotificationHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Primary Key
+    private Long productId; // Primary Key
 
     // 상품과의 연관 관계
     @ManyToOne(fetch = FetchType.LAZY)

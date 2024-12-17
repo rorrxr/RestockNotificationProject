@@ -11,7 +11,7 @@ public class ProductUserNotificationHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 상품 아이디
+    private Long productId; // 상품 아이디
 
     // 상품 알림 설정과 연관 관계
     @ManyToOne(fetch = FetchType.LAZY)

@@ -11,10 +11,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductNotificationHistoryResponseDto {
-    private Long id;
-
-    // 상품 아이디
     private Long productId;
+
+//    // 상품 아이디
+//    private Long productId;
 
     // 재입고 회차
     private Integer restockRound;
