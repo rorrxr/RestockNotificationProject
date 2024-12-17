@@ -107,8 +107,7 @@ public class NotificationService {
         }
 
         return new ProductNotificationHistoryResponseDto(
-                notificationHistory.getId(),
-                notificationHistory.getProduct().getId(), // Product 객체에서 ID 조회
+                notificationHistory.getProductId(),
                 notificationHistory.getRestockRound(),
                 notificationHistory.getStatus(),
                 notificationHistory.getLastNotifiedUserId()
