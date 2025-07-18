@@ -1,6 +1,5 @@
 # 개인 기업과제 프로젝트 2번 : 재입고 알림 시스템
 - 개발환경 : SpringBoot, Spring Data JPA, MySql, Docker, DBeaver
-- 팀 스터디 8조 : 김민주, 정닛시, 양한서
 
 ## 과제 설명
 
